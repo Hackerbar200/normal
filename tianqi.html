@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thanh Hoa Weather</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(145deg, #8b0000, #ff0000, #ff6b6b);
+    color: white;
+    min-height: 100vh;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: hidden;
+  }
+  
+  .weather-container {
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  
+  .city-info h1 {
+    font-size: clamp(1.8em, 6vw, 3.5em);
+    font-weight: 800;
+    margin-bottom: 5px;
+    line-height: 1.2;
+  }
+  
+  .current-time {
+    font-size: clamp(1em, 3.5vw, 1.8em);
+    font-weight: 600;
+    opacity: 0.9;
+    margin-bottom: 5px;
+  }
+  
+  .timezone-info {
+    font-size: clamp(0.7em, 2.5vw, 1em);
+    opacity: 0.7;
+  }
+  
+  .current-weather {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px 0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    gap: 15px;
+  }
+  
+  .temperature {
+    font-size: clamp(3em, 12vw, 6em);
+    font-weight: 900;
+    text-align: center;
+  }
+  
+  .weather-condition {
+    text-align: center;
+  }
+  
+  .weather-condition p {
+    font-size: clamp(1.3em, 4.5vw, 2.5em);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .weather-icon {
+    font-size: clamp(2.5em, 9vw, 5em);
+    margin-bottom: 8px;
+  }
+  
+  .weather-details {
+    text-align: center;
+    width: 100%;
+  }
+  
+  .weather-details p {
+    font-size: clamp(1em, 3vw, 1.5em);
+    margin-bottom: 6px;
+    opacity: 0.9;
+  }
+  
+  .forecast {
+    margin-top: 20px;
+  }
+  
+  .forecast-title {
+    font-size: clamp(1.4em, 4.5vw, 2.2em);
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  
+  .forecast-days {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .forecast-day {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.3s ease;
+    min-height: 80px;
+  }
+  
+  .forecast-day:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .day-name {
+    font-size: clamp(1.1em, 3.5vw, 1.8em);
+    font-weight: 700;
+    width: 20%;
+    min-width: 60px;
+  }
+  
+  .day-icon {
+    font-size: clamp(2em, 6vw, 3.5em);
+    width: 20%;
+    text-align: center;
+  }
+  
+  .day-temp {
+    font-size: clamp(1.3em, 4vw, 2em);
+    font-weight: 700;
+    width: 20%;
+    text-align: center;
+  }
+  
+  .day-desc {
+    font-size: clamp(0.9em, 2.8vw, 1.3em);
+    opacity: 0.9;
+    width: 40%;
+    text-align: center;
+    line-height: 1.2;
+  }
+  
+  .footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: clamp(0.8em, 2.5vw, 1.2em);
+    opacity: 0.8;
+  }
+  
+  .loader {
+    display: none;
+    text-align: center;
+    padding: 15px;
+  }
+  
+  .spinner {
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 5px solid white;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .error {
+    display: none;
+    background: rgba(255, 0, 0, 0.2);
+    border-left: 5px solid #ff4d4d;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: clamp(1em, 3vw, 1.5em);
+    text-align: center;
+  }
+  
+  /* 针对小屏幕的优化 */
+  @media (min-width: 480px) {
+    .forecast-days {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .forecast-day {
+      flex-direction: column;
+      justify-content: center;
+      min-height: 140px;
+    }
+    
+    .day-name, .day-icon, .day-temp, .day-desc {
+      width: 100%;
+      text-align: center;
+    }
+    
+    .day-icon {
+      margin: 5px 0;
+    }
+  }
+  
+  /* 针对中等屏幕的优化 */
+  @media (min-width: 768px) {
+    body {
+      padding: 15px;
+      align-items: center;
+    }
+    
+    .weather-container {
+      padding: 20px;
+      border-radius: 20px;
+    }
+    
+    .header {
+      flex-direction: row;
+      justify-content: space-between;
+      text-align: left;
+    }
+    
+    .city-info {
+      text-align: left;
+    }
+    
+    .current-weather {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    
+    .weather-details {
+      text-align: right;
+    }
+    
+    .forecast-days {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+  }
+  
+  /* 针对大屏幕的优化 */
+  @media (min-width: 1024px) {
+    .forecast-days {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="weather-container">
+    <div class="header">
+      <div class="city-info">
+        <h1 id="city">Thanh Hoa, Vietnam</h1>
+        <div class="current-time" id="current-time">Loading...</div>
+        <div class="timezone-info" id="timezone-info">UTC+7 (Vietnam Time)</div>
+      </div>
+    </div>
+    
+    <div class="current-weather">
+      <div class="temperature" id="temperature">--°C</div>
+      <div class="weather-condition">
+        <div class="weather-icon" id="weather-icon">⛅</div>
+        <p id="condition">Loading weather data...</p>
+      </div>
+      <div class="weather-details">
+        <p id="humidity">Humidity: --%</p>
+        <p id="wind">Wind: -- km/h</p>
+        <p id="feels-like">Feels like: --°C</p>
+      </div>
+    </div>
+    
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Loading weather data...</p>
+    </div>
+    
+    <div class="error" id="error">
+      <p>Unable to load weather data. Please check your connection and try again.</p>
+    </div>
+    
+    <div class="forecast">
+      <h2 class="forecast-title">5-Day Forecast</h2>
+      <div class="forecast-days" id="forecast-days">
+        <!-- Forecast days will be populated by JavaScript -->
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Data provided by WeatherAPI • Auto-updates every hour • Timezone: UTC+7</p>
+    </div>
+  </div>
+
+  <script>
+    // API configuration
+    const apiKey = "83ddc2338ccb4fd19d091121251311";
+    const city = "Thanh Hoa";
+    
+    // DOM elements
+    const cityElement = document.getElementById('city');
+    const currentTimeElement = document.getElementById('current-time');
+    const timezoneInfoElement = document.getElementById('timezone-info');
+    const temperatureElement = document.getElementById('temperature');
+    const conditionElement = document.getElementById('condition');
+    const weatherIconElement = document.getElementById('weather-icon');
+    const humidityElement = document.getElementById('humidity');
+    const windElement = document.getElementById('wind');
+    const feelsLikeElement = document.getElementById('feels-like');
+    const forecastDaysElement = document.getElementById('forecast-days');
+    const loaderElement = document.getElementById('loader');
+    const errorElement = document.getElementById('error');
+    
+    // International standard day abbreviations
+    const dayAbbreviations = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Weather icons mapping
+    const weatherIcons = {
+      'Sunny': '☀️',
+      'Clear': '☀️',
+      'Partly cloudy': '⛅',
+      'Cloudy': '☁️',
+      'Overcast': '☁️',
+      'Mist': '🌫️',
+      'Fog': '🌫️',
+      'Light rain': '🌦️',
+      'Rain': '🌧️',
+      'Heavy rain': '⛈️',
+      'Thunderstorm': '⛈️',
+      'Snow': '❄️',
+      'Sleet': '🌨️'
+    };
+    
+    // Show loading state
+    function showLoading() {
+      loaderElement.style.display = 'block';
+      errorElement.style.display = 'none';
+    }
+    
+    // Hide loading state
+    function hideLoading() {
+      loaderElement.style.display = 'none';
+    }
+    
+    // Show error state
+    function showError() {
+      errorElement.style.display = 'block';
+      conditionElement.textContent = 'Failed to load data';
+    }
+    
+    // Get current time in UTC+7 (Vietnam Time)
+    function getVietnamTime() {
+      const now = new Date();
+      
+      // Vietnam is UTC+7
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const vietnamTime = new Date(utc + (7 * 3600000)); // UTC+7
+      
+      return vietnamTime;
+    }
+    
+    // Update current time
+    function updateCurrentTime() {
+      const vietnamTime = getVietnamTime();
+      
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+      };
+      
+      currentTimeElement.textContent = vietnamTime.toLocaleDateString('en-US', options);
+      
+      // Also show the time in 24-hour format
+      const timeString = vietnamTime.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      timezoneInfoElement.textContent = `Vietnam Time (UTC+7): ${timeString}`;
+    }
+    
+    // Get weather icon based on condition
+    function getWeatherIcon(condition) {
+      for (const key in weatherIcons) {
+        if (condition.toLowerCase().includes(key.toLowerCase())) {
+          return weatherIcons[key];
+        }
+      }
+      return '⛅'; // Default icon
+    }
+    
+    // Fetch weather data from API
+    async function fetchWeatherData() {
+      showLoading();
+      
+      try {
+        // Using direct API call with fallback to CORS proxy if needed
+        let apiUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=5&aqi=no&alerts=no`;
+        
+        // Try direct API call first
+        let response = await fetch(apiUrl);
+        
+        // If direct call fails, try with CORS proxy
+        if (!response.ok) {
+          console.log("Direct API call failed, trying with CORS proxy...");
+          const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+          response = await fetch(proxyUrl + apiUrl, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+        }
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        displayWeatherData(data);
+        hideLoading();
+        
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
+        hideLoading();
+        showError();
+        
+        // Fallback to mock data if API fails
+        displayMockData();
+      }
+    }
+    
+    // Display weather data in the UI
+    function displayWeatherData(data) {
+      // Current weather
+      cityElement.textContent = `${data.location.name}, ${data.location.country}`;
+      temperatureElement.textContent = `${Math.round(data.current.temp_c)}°C`;
+      conditionElement.textContent = data.current.condition.text;
+      weatherIconElement.textContent = getWeatherIcon(data.current.condition.text);
+      humidityElement.textContent = `Humidity: ${data.current.humidity}%`;
+      windElement.textContent = `Wind: ${data.current.wind_kph} km/h`;
+      feelsLikeElement.textContent = `Feels like: ${Math.round(data.current.feelslike_c)}°C`;
+      
+      // Forecast
+      forecastDaysElement.innerHTML = '';
+      data.forecast.forecastday.forEach(day => {
+        const date = new Date(day.date);
+        const dayName = dayAbbreviations[date.getDay()];
+        
+        const forecastDayElement = document.createElement('div');
+        forecastDayElement.className = 'forecast-day';
+        forecastDayElement.innerHTML = `
+          <div class="day-name">${dayName}</div>
+          <div class="day-icon">${getWeatherIcon(day.day.condition.text)}</div>
+          <div class="day-temp">${Math.round(day.day.avgtemp_c)}°C</div>
+          <div class="day-desc">${day.day.condition.text}</div>
+        `;
+        
+        forecastDaysElement.appendChild(forecastDayElement);
+      });
+    }
+    
+    // Fallback mock data for when API fails
+    function displayMockData() {
+      cityElement.textContent = "Thanh Hoa, Vietnam";
+      temperatureElement.textContent = "28°C";
+      conditionElement.textContent = "Partly cloudy";
+      weatherIconElement.textContent = "⛅";
+      humidityElement.textContent = "Humidity: 75%";
+      windElement.textContent = "Wind: 12 km/h";
+      feelsLikeElement.textContent = "Feels like: 30°C";
+      
+      // Mock forecast data
+      forecastDaysElement.innerHTML = '';
+      const mockForecast = [
+        { day: 'Mon', temp: 29, condition: 'Partly cloudy' },
+        { day: 'Tue', temp: 30, condition: 'Sunny' },
+        { day: 'Wed', temp: 28, condition: 'Rain' },
+        { day: 'Thu', temp: 27, condition: 'Cloudy' },
+        { day: 'Fri', temp: 29, condition: 'Sunny' }
+      ];
+      
+      mockForecast.forEach(day => {
+        const forecastDayElement = document.createElement('div');
+        forecastDayElement.className = 'forecast-day';
+        forecastDayElement.innerHTML = `
+          <div class="day-name">${day.day}</div>
+          <div class="day-icon">${getWeatherIcon(day.condition)}</div>
+          <div class="day-temp">${day.temp}°C</div>
+          <div class="day-desc">${day.condition}</div>
+        `;
+        
+        forecastDaysElement.appendChild(forecastDayElement);
+      });
+    }
+    
+    // Initialize the app
+    function initApp() {
+      updateCurrentTime();
+      fetchWeatherData();
+      
+      // Update time every minute
+      setInterval(updateCurrentTime, 60000);
+      
+      // Update weather data every hour
+      setInterval(fetchWeatherData, 3600000);
+    }
+    
+    // Start the application
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
